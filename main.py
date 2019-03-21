@@ -17,16 +17,24 @@ test1_file_name = "./data/1_for_test/"
 
 ################################################
 #  train_data
-data_path0 = os.path.join(train0_file_path, '*.jpg')
-data0 = glob.glob(data_path0)
-data_path1 = os.path.join(train1_file_path, '*.jpg')
-data1 = glob.glob(data_path1)
-data = data0 + data1
-data_number = len(data)
-rand_array = random.sample(range(0, data_number + 1), data_number)
-batch_path = []
-for i in range(data_number/batch_size):
-    batch_path.append(data[i * batch_size: (i + 1) * batch_size])
+def saperate_data():
+    data_path0 = os.path.join(train0_file_path, '*.jpg')
+    data0 = glob.glob(data_path0)
+    data_path1 = os.path.join(train1_file_path, '*.jpg')
+    data1 = glob.glob(data_path1)
+    data = data0 + data1
+    data_number = len(data)
+    rand_array = random.sample(range(0, data_number + 1), data_number)
+    batch_path = []
+    for i in range(data_number / batch_size):
+        batch_path.append(data[i * batch_size: (i + 1) * batch_size])
+
+    return batch_path
+
+def get_batch():
+    batch_data = 1
+
+    return bactch_data
 
 
 ################################################
@@ -140,4 +148,5 @@ with tf.Session() as sess:
         print "train from the beginning!"
     for i in range(epochs):
         for ii in range(datanumber/batch_size)
-            batch = 
+            batch_data = get_batch()
+            batch_cost,_ = sess.run((cost, opt), feed_dict = {inputs: batch})
