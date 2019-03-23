@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+#  created by JAY
+#  the main part of the convolutional autoencoder
 
 import tensorflow as tf
 import os
@@ -9,6 +11,8 @@ import random
 #  some parameter
 epochs = 10000
 batch_size = 100
+display_number = 2
+store_number = 5
 train0_file_path = "./data/0_for_train/"
 train1_file_name = "./data/1_for_train/"
 test0_file_path = "./data/0_for_test/"
@@ -28,12 +32,12 @@ def saperate_data():
     batch_path = []
     for i in range(data_number / batch_size):
         batch_path.append(data[i * batch_size: (i + 1) * batch_size])
-
+    
     return batch_path
 
 def get_batch():
     batch_data = 1
-
+    
     return bactch_data
 
 
@@ -120,10 +124,10 @@ upsample3 = tf.image.resize_images(deconv2,
 #  240*160*32
 
 reconstruction = tf.layers.conv2d(inputs=upsample3,
-                           filters=3,
-                           kernel_size=(3, 3),
-                           padding='smae',
-                           activation=tf.nn.sigmoid)
+                                  filters=3,
+                                  kernel_size=(3, 3),
+                                  padding='smae',
+                                  activation=tf.nn.sigmoid)
 #  240*160*3
 
 loss = tf.nn.l2_loss(reconstruction - input)
@@ -140,13 +144,21 @@ opt = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
-    filepath = "./CAE.ckpt"
+    filepath = ".\CAE.ckpt"
     if os.path.isfile(filepath + ".meta"):
         saver.restore(sess, filepath)
         print "restore success!"
     else:
         print "train from the beginning!"
     for i in range(epochs):
-        for ii in range(datanumber/batch_size)
+        for ii in range(datanumber/batch_size):
             batch_data = get_batch()
-            batch_cost,_ = sess.run((cost, opt), feed_dict = {inputs: batch})
+            batch_cost, _ = sess.run((cost, opt), feed_dict={inputs: batch})
+        if i % display_number == 0:
+            print "Epoch: {} of {}".format(i, epochs) + '\n' + "Training loss: {:.5f}".format(batch_cost)
+        if i % store_number == 0
+            save_path = saver.save(sess=sess, save_path=filepath)
+            print "Model saced in file: %s" % filepath
+
+
+
