@@ -62,30 +62,48 @@ print x3out
 
 """
 
+import tensorflow as tf
 import os
-from glob import glob
+import glob
 import random
+import numpy as np
+import cv2
 
+###############################################
+#  some parameter
+epochs = 1000
 batch_size = 100
-
+display_number = 2
+store_number = 5
 train0_file_path = "./data/0_for_train/"
 train1_file_path = "./data/1_for_train/"
 test0_file_path = "./data/0_for_test/"
 test1_file_path = "./data/1_for_test/"
 
-data_path0 = os.path.join(train0_file_path, '*.jpg')
-data0 = glob(data_path0)
-data_path1 = os.path.join(train1_file_path, '*.jpg')
-data1 = glob(data_path1)
-data = data0 + data1
 
-data_number = len(data)
-rand_array = random.sample(range(0, data_number + 1), data_number)
-batch_path = []
-for i in range(data_number/batch_size):
-    batch_path.append(data[i * batch_size: (i + 1) * batch_size])
+################################################
+#  train_data
+def data_parameter():
+    data_path0 = os.path.join(train0_file_path, '*.jpg')
+    data0 = glob.glob(data_path0)
+    data_path1 = os.path.join(train1_file_path, '*.jpg')
+    data1 = glob.glob(data_path1)
+    data = data0 + data1
+    np.random.shuffle(data)
+    return data, len(data)
 
-print [data_number, len(batch_path), len(batch_path[1])]
-print batch_path[0]
-print batch_path[1]
-print data[199]
+
+def data_getbatch(path_array, total_number):
+    batch = []
+    for i in range(total_number / batch_size):
+        subbatch = []
+        for ii in range(batch_size):
+            subbatch.append(cv2.imread(path_array[ii + i * batch_size]))
+        batch.append(subbatch)
+    batch = np.array(batch).astype(np.float32)
+    return batch
+
+
+image_path, datanumber = data_parameter()
+batch_data = data_getbatch(image_path, datanumber)
+

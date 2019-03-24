@@ -6,45 +6,47 @@ import tensorflow as tf
 import os
 import glob
 import random
+import numpy as np
+import cv2
 
 ###############################################
 #  some parameter
-epochs = 10000
+epochs = 1000
 batch_size = 100
 display_number = 2
 store_number = 5
 train0_file_path = "./data/0_for_train/"
-train1_file_name = "./data/1_for_train/"
+train1_file_path = "./data/1_for_train/"
 test0_file_path = "./data/0_for_test/"
-test1_file_name = "./data/1_for_test/"
+test1_file_path = "./data/1_for_test/"
 
 
 ################################################
 #  train_data
-def saperate_data():
+def data_parameter():
     data_path0 = os.path.join(train0_file_path, '*.jpg')
     data0 = glob.glob(data_path0)
     data_path1 = os.path.join(train1_file_path, '*.jpg')
     data1 = glob.glob(data_path1)
     data = data0 + data1
-    data_number = len(data)
-    rand_array = random.sample(range(0, data_number + 1), data_number)
-    batch_path = []
-    for i in range(data_number / batch_size):
-        batch_path.append(data[i * batch_size: (i + 1) * batch_size])
-    
-    return batch_path
+    np.random.shuffle(data)
+    return data, len(data)
 
-def get_batch():
-    batch_data = 1
-    
-    return bactch_data
 
+def data_getbatch(path_array, total_number):
+    batch = []
+    for i in range(total_number / batch_size):
+        subbatch = []
+        for ii in range(batch_size):
+            subbatch.append(cv2.imread(path_array[ii + i * batch_size]))
+        batch.append(subbatch)
+    batch = np.array(batch).astype(np.float32)
+    return batch
 
 ################################################
 #  network frame
 
-#  the parameter of picture
+#  the parameter of image
 height = 160
 width = 240
 
@@ -95,8 +97,8 @@ decoded = tf.layers.dense(inputs=encoded,
                           activation=tf.nn.relu)
 #  12*8*16 series
 
-shaped = tf.reshape(input=decoded,
-                    shape=[-1, 12, 8, 16])
+shaped = tf.reshape(decoded,
+                    shape=[-1, 8, 12, 16])
 #  12*8*16
 
 deconv3 = tf.layers.conv2d(inputs=shaped,
@@ -107,7 +109,7 @@ deconv3 = tf.layers.conv2d(inputs=shaped,
 #  12*8*64
 
 upsample2 = tf.image.resize_images(deconv3,
-                                   size=(48, 32),
+                                   size=(32, 48),
                                    method=tf.image.ResizeMethod.BILINEAR)
 #  48*32*64
 
@@ -119,14 +121,14 @@ deconv2 = tf.layers.conv2d(inputs=upsample2,
 #  48*32*32
 
 upsample3 = tf.image.resize_images(deconv2,
-                                   size=(240, 160),
+                                   size=(160, 240),
                                    method=tf.image.ResizeMethod.BILINEAR)
 #  240*160*32
 
 reconstruction = tf.layers.conv2d(inputs=upsample3,
                                   filters=3,
                                   kernel_size=(3, 3),
-                                  padding='smae',
+                                  padding='same',
                                   activation=tf.nn.sigmoid)
 #  240*160*3
 
@@ -139,10 +141,9 @@ opt = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 
 #  training parameter
 
-
-
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
+    print "variable initialize success!"
     saver = tf.train.Saver()
     filepath = ".\CAE.ckpt"
     if os.path.isfile(filepath + ".meta"):
@@ -151,12 +152,16 @@ with tf.Session() as sess:
     else:
         print "train from the beginning!"
     for i in range(epochs):
-        for ii in range(datanumber/batch_size):
-            batch_data = get_batch()
-            batch_cost, _ = sess.run((cost, opt), feed_dict={inputs: batch})
+        image_path, datanumber = data_parameter()           # each time we generate the batch is random
+        print "read data success!"
+        batch_data = data_getbatch(image_path, datanumber)  # so we need to reproduct the batch each epochs
+        print "separate data randomly into batch success!"
+        for ii in range(datanumber / batch_size):
+            batch = batch_data[ii]
+            batch_cost, _ = sess.run((cost, opt), feed_dict={input: batch})
         if i % display_number == 0:
             print "Epoch: {} of {}".format(i, epochs) + '\n' + "Training loss: {:.5f}".format(batch_cost)
-        if i % store_number == 0
+        if i % store_number == 0:
             save_path = saver.save(sess=sess, save_path=filepath)
             print "Model saced in file: %s" % filepath
 
