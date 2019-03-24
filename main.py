@@ -8,6 +8,7 @@ import glob
 import random
 import numpy as np
 import cv2
+import time
 
 ###############################################
 #  some parameter
@@ -141,7 +142,7 @@ opt = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 
 #  training parameter
 
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     sess.run(tf.global_variables_initializer())
     print "variable initialize success!"
     saver = tf.train.Saver()
@@ -156,9 +157,12 @@ with tf.Session() as sess:
         print "read data success!"
         batch_data = data_getbatch(image_path, datanumber)  # so we need to reproduct the batch each epochs
         print "separate data randomly into batch success!"
+        start_time = time.time()
         for ii in range(datanumber / batch_size):
             batch = batch_data[ii]
             batch_cost, _ = sess.run((cost, opt), feed_dict={input: batch})
+        one_batch_time = time.time() - start_time
+        print ”the cost of this epochs: {}“.format(one_batch_time)
         if i % display_number == 0:
             print "Epoch: {} of {}".format(i, epochs) + '\n' + "Training loss: {:.5f}".format(batch_cost)
         if i % store_number == 0:
