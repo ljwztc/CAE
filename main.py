@@ -34,14 +34,13 @@ def data_parameter():
     return data, len(data)
 
 
-def data_getbatch(path_array, total_number):
+def data_getbatch(path_array, now_index):
     batch = []
-    for i in range(total_number / batch_size):
-        subbatch = []
-        for ii in range(batch_size):
-            subbatch.append(cv2.imread(path_array[ii + i * batch_size]))
-        batch.append(subbatch)
-    batch = np.array(batch).astype(np.float32)
+    for ii in range(batch_size):
+        image = cv2.imread(path_array[ii + now_index * batch_size])
+        float_image = image.astype(np.float32)
+        # print float_image.dtype
+        batch.append(float_image)
     return batch
 
 ################################################
@@ -141,8 +140,11 @@ opt = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
 # or AdamOptimizer? have a try later
 
 #  training parameter
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+config.log_device_placement = True
 
-with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
+with tf.Session(config=config) as sess:
     sess.run(tf.global_variables_initializer())
     print "variable initialize success!"
     saver = tf.train.Saver()
@@ -155,14 +157,13 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     for i in range(epochs):
         image_path, datanumber = data_parameter()           # each time we generate the batch is random
         print "read data success!"
-        batch_data = data_getbatch(image_path, datanumber)  # so we need to reproduct the batch each epochs
-        print "separate data randomly into batch success!"
         start_time = time.time()
         for ii in range(datanumber / batch_size):
-            batch = batch_data[ii]
+            batch = data_getbatch(image_path, ii)
             batch_cost, _ = sess.run((cost, opt), feed_dict={input: batch})
+            print "batch {} trained success!".format(ii)
         one_batch_time = time.time() - start_time
-        print ”the cost of this epochs: {}“.format(one_batch_time)
+        print "the cost of this epochs: {}".format(one_batch_time)
         if i % display_number == 0:
             print "Epoch: {} of {}".format(i, epochs) + '\n' + "Training loss: {:.5f}".format(batch_cost)
         if i % store_number == 0:
