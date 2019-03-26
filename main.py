@@ -13,7 +13,7 @@ import time
 ###############################################
 #  some parameter
 epochs = 1000
-batch_size = 100
+batch_size = 20
 display_number = 2
 store_number = 5
 train0_file_path = "./data/0_for_train/"
